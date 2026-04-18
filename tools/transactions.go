@@ -63,25 +63,28 @@ func registerTransactionTools(server *mcp.Server, client *ynab.Client) {
 			return errResult(err), struct{}{}, nil
 		}
 
-		var sb strings.Builder
-		fmt.Fprintf(&sb, "Found %d transaction(s):\n\n", len(txns))
+		var sb, body strings.Builder
+		count := 0
 		for _, t := range txns {
 			if t.Deleted {
 				continue
 			}
+			count++
 			payee := t.PayeeName
 			if payee == "" {
 				payee = "(no payee)"
 			}
-			fmt.Fprintf(&sb, "• %s | %s | %s", t.Date, payee, FormatMilliunits(t.Amount))
+			fmt.Fprintf(&body, "• %s | %s | %s", t.Date, payee, FormatMilliunits(t.Amount))
 			if t.CategoryName != "" {
-				fmt.Fprintf(&sb, " | %s", t.CategoryName)
+				fmt.Fprintf(&body, " | %s", t.CategoryName)
 			}
 			if t.Memo != "" {
-				fmt.Fprintf(&sb, " | %s", t.Memo)
+				fmt.Fprintf(&body, " | %s", t.Memo)
 			}
-			fmt.Fprintf(&sb, "\n  Account: %s | Status: %s | ID: %s\n", t.AccountName, t.Cleared, t.ID)
+			fmt.Fprintf(&body, "\n  Account: %s | Status: %s | ID: %s\n", t.AccountName, t.Cleared, t.ID)
 		}
+		fmt.Fprintf(&sb, "Found %d transaction(s):\n\n", count)
+		sb.WriteString(body.String())
 		return textResult(sb.String()), struct{}{}, nil
 	})
 

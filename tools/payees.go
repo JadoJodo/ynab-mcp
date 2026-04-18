@@ -23,14 +23,17 @@ func registerPayeeTools(server *mcp.Server, client *ynab.Client) {
 			return errResult(err), struct{}{}, nil
 		}
 
-		var sb strings.Builder
-		fmt.Fprintf(&sb, "Found %d payee(s):\n\n", len(payees))
+		var sb, body strings.Builder
+		count := 0
 		for _, p := range payees {
 			if p.Deleted {
 				continue
 			}
-			fmt.Fprintf(&sb, "• %s (ID: %s)\n", p.Name, p.ID)
+			count++
+			fmt.Fprintf(&body, "• %s (ID: %s)\n", p.Name, p.ID)
 		}
+		fmt.Fprintf(&sb, "Found %d payee(s):\n\n", count)
+		sb.WriteString(body.String())
 		return textResult(sb.String()), struct{}{}, nil
 	})
 }

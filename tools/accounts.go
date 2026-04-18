@@ -23,19 +23,22 @@ func registerAccountTools(server *mcp.Server, client *ynab.Client) {
 			return errResult(err), struct{}{}, nil
 		}
 
-		var sb strings.Builder
-		fmt.Fprintf(&sb, "Found %d account(s):\n\n", len(accounts))
+		var sb, body strings.Builder
+		count := 0
 		for _, a := range accounts {
 			if a.Deleted || a.Closed {
 				continue
 			}
+			count++
 			status := "Off-budget"
 			if a.OnBudget {
 				status = "On-budget"
 			}
-			fmt.Fprintf(&sb, "• %s (%s) — Balance: %s [%s]\n  ID: %s\n",
+			fmt.Fprintf(&body, "• %s (%s) — Balance: %s [%s]\n  ID: %s\n",
 				a.Name, a.Type, FormatMilliunits(a.Balance), status, a.ID)
 		}
+		fmt.Fprintf(&sb, "Found %d account(s):\n\n", count)
+		sb.WriteString(body.String())
 		return textResult(sb.String()), struct{}{}, nil
 	})
 }
