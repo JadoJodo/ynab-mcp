@@ -1,0 +1,66 @@
+version: 2
+
+project_name: ynab-mcp
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: ynab-mcp
+    main: .
+    binary: ynab-mcp
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.Version={{.Version}}
+
+archives:
+  - id: default
+    formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: Bug fixes
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: Other
+      order: 999
+
+homebrew_casks:
+  - name: ynab-mcp
+    repository:
+      owner: JadoJodo
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: https://github.com/JadoJodo/ynab-mcp
+    description: MCP server for YNAB (You Need A Budget)
+    binaries: [ynab-mcp]
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/ynab-mcp"]
+          end
+    caveats: |
+      ynab-mcp requires a YNAB_API_TOKEN environment variable set in your
+      MCP client config. Get a token at https://app.ynab.com/settings/developer.
