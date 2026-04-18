@@ -47,11 +47,55 @@ type updateTransactionInput struct {
 	FlagColor     *string  `json:"flag_color,omitempty" jsonschema:"Flag color: red orange yellow green blue purple or null to clear"`
 }
 
+type deleteTransactionInput struct {
+	BudgetID      string `json:"budget_id" jsonschema:"Budget ID or last-used"`
+	TransactionID string `json:"transaction_id" jsonschema:"Transaction ID to delete"`
+}
+
+func renderTransaction(t *ynab.Transaction) string {
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "ID: %s\n", t.ID)
+	fmt.Fprintf(&sb, "Date: %s\n", t.Date)
+	fmt.Fprintf(&sb, "Amount: %s\n", FormatMilliunits(t.Amount))
+	fmt.Fprintf(&sb, "Payee: %s\n", t.PayeeName)
+	fmt.Fprintf(&sb, "Category: %s\n", t.CategoryName)
+	fmt.Fprintf(&sb, "Account: %s\n", t.AccountName)
+	fmt.Fprintf(&sb, "Memo: %s\n", t.Memo)
+	fmt.Fprintf(&sb, "Cleared: %s\n", t.Cleared)
+	fmt.Fprintf(&sb, "Approved: %v\n", t.Approved)
+	fmt.Fprintf(&sb, "Flag: %s\n", t.FlagColor)
+	if len(t.Subtransactions) > 0 {
+		sb.WriteString("\nSplit transactions:\n")
+		for _, s := range t.Subtransactions {
+			fmt.Fprintf(&sb, "  • %s | %s", FormatMilliunits(s.Amount), s.CategoryName)
+			if s.Memo != "" {
+				fmt.Fprintf(&sb, " | %s", s.Memo)
+			}
+			sb.WriteString("\n")
+		}
+	}
+	return sb.String()
+}
+
 func registerTransactionTools(server *mcp.Server, client *ynab.Client) {
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "list_transactions",
 		Description: "List transactions in a YNAB budget. Optionally filter by date, type, account, category, or payee (only one entity filter at a time).",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, input listTransactionsInput) (*mcp.CallToolResult, struct{}, error) {
+		entityFilters := 0
+		if input.AccountID != "" {
+			entityFilters++
+		}
+		if input.CategoryID != "" {
+			entityFilters++
+		}
+		if input.PayeeID != "" {
+			entityFilters++
+		}
+		if entityFilters > 1 {
+			return errResult(fmt.Errorf("only one of account_id, category_id, or payee_id may be set")), struct{}{}, nil
+		}
+
 		txns, err := client.ListTransactions(input.BudgetID, ynab.TransactionFilter{
 			SinceDate:  input.SinceDate,
 			Type:       input.Type,
@@ -96,31 +140,7 @@ func registerTransactionTools(server *mcp.Server, client *ynab.Client) {
 		if err != nil {
 			return errResult(err), struct{}{}, nil
 		}
-
-		var sb strings.Builder
-		fmt.Fprintf(&sb, "Transaction: %s\n", t.ID)
-		fmt.Fprintf(&sb, "Date: %s\n", t.Date)
-		fmt.Fprintf(&sb, "Amount: %s\n", FormatMilliunits(t.Amount))
-		fmt.Fprintf(&sb, "Payee: %s\n", t.PayeeName)
-		fmt.Fprintf(&sb, "Category: %s\n", t.CategoryName)
-		fmt.Fprintf(&sb, "Account: %s\n", t.AccountName)
-		fmt.Fprintf(&sb, "Memo: %s\n", t.Memo)
-		fmt.Fprintf(&sb, "Cleared: %s\n", t.Cleared)
-		fmt.Fprintf(&sb, "Approved: %v\n", t.Approved)
-		if t.FlagColor != "" {
-			fmt.Fprintf(&sb, "Flag: %s\n", t.FlagColor)
-		}
-		if len(t.Subtransactions) > 0 {
-			sb.WriteString("\nSplit transactions:\n")
-			for _, s := range t.Subtransactions {
-				fmt.Fprintf(&sb, "  • %s | %s", FormatMilliunits(s.Amount), s.CategoryName)
-				if s.Memo != "" {
-					fmt.Fprintf(&sb, " | %s", s.Memo)
-				}
-				sb.WriteString("\n")
-			}
-		}
-		return textResult(sb.String()), struct{}{}, nil
+		return textResult(renderTransaction(t)), struct{}{}, nil
 	})
 
 	mcp.AddTool(server, &mcp.Tool{
@@ -142,19 +162,7 @@ func registerTransactionTools(server *mcp.Server, client *ynab.Client) {
 		if err != nil {
 			return errResult(err), struct{}{}, nil
 		}
-
-		var sb strings.Builder
-		fmt.Fprintf(&sb, "Transaction created successfully!\n")
-		fmt.Fprintf(&sb, "ID: %s\n", created.ID)
-		fmt.Fprintf(&sb, "Date: %s\n", created.Date)
-		fmt.Fprintf(&sb, "Amount: %s\n", FormatMilliunits(created.Amount))
-		if created.PayeeName != "" {
-			fmt.Fprintf(&sb, "Payee: %s\n", created.PayeeName)
-		}
-		if created.CategoryName != "" {
-			fmt.Fprintf(&sb, "Category: %s\n", created.CategoryName)
-		}
-		return textResult(sb.String()), struct{}{}, nil
+		return textResult("Transaction created successfully!\n" + renderTransaction(created)), struct{}{}, nil
 	})
 
 	mcp.AddTool(server, &mcp.Tool{
@@ -179,14 +187,16 @@ func registerTransactionTools(server *mcp.Server, client *ynab.Client) {
 		if err != nil {
 			return errResult(err), struct{}{}, nil
 		}
+		return textResult("Transaction updated successfully!\n" + renderTransaction(updated)), struct{}{}, nil
+	})
 
-		var sb strings.Builder
-		fmt.Fprintf(&sb, "Transaction updated successfully!\n")
-		fmt.Fprintf(&sb, "ID: %s\n", updated.ID)
-		fmt.Fprintf(&sb, "Date: %s\n", updated.Date)
-		fmt.Fprintf(&sb, "Amount: %s\n", FormatMilliunits(updated.Amount))
-		fmt.Fprintf(&sb, "Payee: %s\n", updated.PayeeName)
-		fmt.Fprintf(&sb, "Category: %s\n", updated.CategoryName)
-		return textResult(sb.String()), struct{}{}, nil
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "delete_transaction",
+		Description: "Delete a transaction from a YNAB budget",
+	}, func(ctx context.Context, req *mcp.CallToolRequest, input deleteTransactionInput) (*mcp.CallToolResult, struct{}, error) {
+		if err := client.DeleteTransaction(input.BudgetID, input.TransactionID); err != nil {
+			return errResult(err), struct{}{}, nil
+		}
+		return textResult(fmt.Sprintf("Transaction %s deleted.", input.TransactionID)), struct{}{}, nil
 	})
 }
