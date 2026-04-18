@@ -1,10 +1,13 @@
 package tools
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 func TestListTransactionsTool_Success(t *testing.T) {
@@ -63,7 +66,7 @@ func TestGetTransactionTool_Success(t *testing.T) {
 		})
 	})
 	text := callTool(t, cs, "get_transaction", map[string]any{"budget_id": "b1", "transaction_id": "t1"})
-	if !strings.Contains(text, "Transaction: t1") {
+	if !strings.Contains(text, "ID: t1") {
 		t.Errorf("output missing transaction ID: %s", text)
 	}
 	if !strings.Contains(text, "Approved: true") {
@@ -164,5 +167,116 @@ func TestUpdateTransactionTool_Success(t *testing.T) {
 	}
 	if !strings.Contains(text, "-$15.00") {
 		t.Errorf("output missing amount: %s", text)
+	}
+}
+
+func TestListTransactionsTool_RejectsMultipleEntityFilters(t *testing.T) {
+	cs := setupToolServer(t, func(w http.ResponseWriter, r *http.Request) {
+		t.Errorf("server should not be called; got %s %s", r.Method, r.URL.Path)
+	})
+	result, err := cs.CallTool(context.Background(), &mcp.CallToolParams{
+		Name: "list_transactions",
+		Arguments: map[string]any{
+			"budget_id":   "b1",
+			"account_id":  "a1",
+			"category_id": "c1",
+		},
+	})
+	if err != nil {
+		t.Fatalf("CallTool error: %v", err)
+	}
+	if !result.IsError {
+		t.Fatal("expected IsError = true for conflicting filters")
+	}
+	tc, ok := result.Content[0].(*mcp.TextContent)
+	if !ok {
+		t.Fatalf("content is %T, want *mcp.TextContent", result.Content[0])
+	}
+	if !strings.Contains(tc.Text, "only one of") {
+		t.Errorf("error text = %q, want message mentioning 'only one of'", tc.Text)
+	}
+}
+
+func TestCreateTransactionTool_RendersFullFields(t *testing.T) {
+	cs := setupToolServer(t, func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": map[string]any{
+				"transaction": map[string]any{
+					"id":            "t-new",
+					"date":          "2024-01-20",
+					"amount":        -12500,
+					"payee_name":    "Coffee Shop",
+					"category_name": "Dining Out",
+					"account_name":  "Checking",
+					"cleared":       "uncleared",
+					"approved":      true,
+					"memo":          "",
+				},
+			},
+		})
+	})
+	text := callTool(t, cs, "create_transaction", map[string]any{
+		"budget_id":  "b1",
+		"account_id": "a1",
+		"date":       "2024-01-20",
+		"amount":     -12.50,
+	})
+	for _, want := range []string{"Memo:", "Cleared:", "Approved:", "Flag:"} {
+		if !strings.Contains(text, want) {
+			t.Errorf("output missing %q: %s", want, text)
+		}
+	}
+}
+
+func TestUpdateTransactionTool_RendersFullFields(t *testing.T) {
+	cs := setupToolServer(t, func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": map[string]any{
+				"transaction": map[string]any{
+					"id":            "t1",
+					"date":          "2024-01-15",
+					"amount":        -15000,
+					"payee_name":    "Updated Payee",
+					"category_name": "Groceries",
+					"account_name":  "Checking",
+					"cleared":       "cleared",
+					"approved":      true,
+					"memo":          "verify",
+					"flag_color":    "red",
+				},
+			},
+		})
+	})
+	text := callTool(t, cs, "update_transaction", map[string]any{
+		"budget_id":      "b1",
+		"transaction_id": "t1",
+		"flag_color":     "red",
+		"memo":           "verify",
+	})
+	for _, want := range []string{"Memo: verify", "Cleared: cleared", "Approved: true", "Flag: red"} {
+		if !strings.Contains(text, want) {
+			t.Errorf("output missing %q: %s", want, text)
+		}
+	}
+}
+
+func TestDeleteTransactionTool_Success(t *testing.T) {
+	cs := setupToolServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			t.Errorf("method = %s, want DELETE", r.Method)
+		}
+		if r.URL.Path != "/budgets/b1/transactions/t1" {
+			t.Errorf("path = %s, want /budgets/b1/transactions/t1", r.URL.Path)
+		}
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": map[string]any{"transaction": map[string]any{"id": "t1"}},
+		})
+	})
+	text := callTool(t, cs, "delete_transaction", map[string]any{
+		"budget_id":      "b1",
+		"transaction_id": "t1",
+	})
+	if !strings.Contains(text, "Transaction t1 deleted") {
+		t.Errorf("output missing success message: %s", text)
 	}
 }

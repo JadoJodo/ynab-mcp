@@ -2,6 +2,7 @@ package ynab
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 )
 
@@ -83,4 +84,10 @@ func (c *Client) UpdateTransaction(budgetID, transactionID string, txn UpdateTra
 		return nil, err
 	}
 	return &data.Transaction, nil
+}
+
+// DeleteTransaction deletes a transaction by ID.
+func (c *Client) DeleteTransaction(budgetID, transactionID string) error {
+	_, err := c.doRequest(http.MethodDelete, fmt.Sprintf("/budgets/%s/transactions/%s", budgetID, transactionID), nil)
+	return err
 }

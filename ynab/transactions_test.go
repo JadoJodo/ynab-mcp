@@ -157,6 +157,21 @@ func TestCreateTransaction_Success(t *testing.T) {
 	}
 }
 
+func TestDeleteTransaction_Success(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			t.Errorf("method = %s, want DELETE", r.Method)
+		}
+		if r.URL.Path != "/budgets/b1/transactions/t1" {
+			t.Errorf("path = %s, want /budgets/b1/transactions/t1", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+	if err := c.DeleteTransaction("b1", "t1"); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestUpdateTransaction_Success(t *testing.T) {
 	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut {
