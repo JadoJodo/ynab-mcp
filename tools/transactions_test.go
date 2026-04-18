@@ -76,13 +76,13 @@ func TestGetTransactionTool_WithSubtransactions(t *testing.T) {
 		json.NewEncoder(w).Encode(map[string]any{
 			"data": map[string]any{
 				"transaction": map[string]any{
-					"id":            "t1",
-					"date":          "2024-01-15",
-					"amount":        -25000,
-					"payee_name":    "Store",
-					"account_name":  "Checking",
-					"cleared":       "cleared",
-					"approved":      true,
+					"id":           "t1",
+					"date":         "2024-01-15",
+					"amount":       -25000,
+					"payee_name":   "Store",
+					"account_name": "Checking",
+					"cleared":      "cleared",
+					"approved":     true,
 					"subtransactions": []map[string]any{
 						{"id": "st1", "amount": -15000, "category_name": "Groceries", "memo": "Food"},
 						{"id": "st2", "amount": -10000, "category_name": "Household", "memo": "Supplies"},

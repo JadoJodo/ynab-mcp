@@ -44,20 +44,20 @@ type BudgetDetail struct {
 	CategoryGroups []CategoryGroup `json:"category_groups,omitempty"`
 	Categories     []Category      `json:"categories,omitempty"`
 	Payees         []Payee         `json:"payees,omitempty"`
-	Months     []Month     `json:"months,omitempty"`
+	Months         []Month         `json:"months,omitempty"`
 }
 
 // Account represents a YNAB account.
 type Account struct {
-	ID                string `json:"id"`
-	Name              string `json:"name"`
-	Type              string `json:"type"`
-	OnBudget          bool   `json:"on_budget"`
-	Closed            bool   `json:"closed"`
-	Balance           int64  `json:"balance"`
-	ClearedBalance    int64  `json:"cleared_balance"`
-	UnclearedBalance  int64  `json:"uncleared_balance"`
-	Deleted           bool   `json:"deleted"`
+	ID               string `json:"id"`
+	Name             string `json:"name"`
+	Type             string `json:"type"`
+	OnBudget         bool   `json:"on_budget"`
+	Closed           bool   `json:"closed"`
+	Balance          int64  `json:"balance"`
+	ClearedBalance   int64  `json:"cleared_balance"`
+	UnclearedBalance int64  `json:"uncleared_balance"`
+	Deleted          bool   `json:"deleted"`
 }
 
 // CategoryGroup represents a YNAB category group with its categories.
@@ -71,39 +71,39 @@ type CategoryGroup struct {
 
 // Category represents a single YNAB category.
 type Category struct {
-	ID                      string `json:"id"`
-	CategoryGroupID         string `json:"category_group_id"`
-	CategoryGroupName       string `json:"category_group_name,omitempty"`
-	Name                    string `json:"name"`
-	Hidden                  bool   `json:"hidden"`
-	Budgeted                int64  `json:"budgeted"`
-	Activity                int64  `json:"activity"`
-	Balance                 int64  `json:"balance"`
-	GoalType                string `json:"goal_type,omitempty"`
-	GoalTarget              int64  `json:"goal_target,omitempty"`
-	GoalTargetMonth         string `json:"goal_target_month,omitempty"`
-	GoalPercentageComplete  int    `json:"goal_percentage_complete,omitempty"`
-	Deleted                 bool   `json:"deleted"`
+	ID                     string `json:"id"`
+	CategoryGroupID        string `json:"category_group_id"`
+	CategoryGroupName      string `json:"category_group_name,omitempty"`
+	Name                   string `json:"name"`
+	Hidden                 bool   `json:"hidden"`
+	Budgeted               int64  `json:"budgeted"`
+	Activity               int64  `json:"activity"`
+	Balance                int64  `json:"balance"`
+	GoalType               string `json:"goal_type,omitempty"`
+	GoalTarget             int64  `json:"goal_target,omitempty"`
+	GoalTargetMonth        string `json:"goal_target_month,omitempty"`
+	GoalPercentageComplete int    `json:"goal_percentage_complete,omitempty"`
+	Deleted                bool   `json:"deleted"`
 }
 
 // Transaction represents a YNAB transaction.
 type Transaction struct {
-	ID                string        `json:"id"`
-	Date              string        `json:"date"`
-	Amount            int64         `json:"amount"`
-	Memo              string        `json:"memo,omitempty"`
-	Cleared           string        `json:"cleared"`
-	Approved          bool          `json:"approved"`
-	FlagColor         string        `json:"flag_color,omitempty"`
-	FlagName          string        `json:"flag_name,omitempty"`
-	AccountID         string        `json:"account_id"`
-	AccountName       string        `json:"account_name,omitempty"`
-	PayeeID           string        `json:"payee_id,omitempty"`
-	PayeeName         string        `json:"payee_name,omitempty"`
-	CategoryID        string        `json:"category_id,omitempty"`
-	CategoryName      string        `json:"category_name,omitempty"`
-	TransferAccountID string        `json:"transfer_account_id,omitempty"`
-	Deleted           bool          `json:"deleted"`
+	ID                string           `json:"id"`
+	Date              string           `json:"date"`
+	Amount            int64            `json:"amount"`
+	Memo              string           `json:"memo,omitempty"`
+	Cleared           string           `json:"cleared"`
+	Approved          bool             `json:"approved"`
+	FlagColor         string           `json:"flag_color,omitempty"`
+	FlagName          string           `json:"flag_name,omitempty"`
+	AccountID         string           `json:"account_id"`
+	AccountName       string           `json:"account_name,omitempty"`
+	PayeeID           string           `json:"payee_id,omitempty"`
+	PayeeName         string           `json:"payee_name,omitempty"`
+	CategoryID        string           `json:"category_id,omitempty"`
+	CategoryName      string           `json:"category_name,omitempty"`
+	TransferAccountID string           `json:"transfer_account_id,omitempty"`
+	Deleted           bool             `json:"deleted"`
 	Subtransactions   []Subtransaction `json:"subtransactions,omitempty"`
 }
 
@@ -157,12 +157,12 @@ type Payee struct {
 
 // Month represents a YNAB budget month.
 type Month struct {
-	Month      string     `json:"month"`
-	Note       string     `json:"note,omitempty"`
-	Income     int64      `json:"income"`
-	Budgeted   int64      `json:"budgeted"`
-	Activity   int64      `json:"activity"`
-	ToBeBudgeted int64    `json:"to_be_budgeted"`
-	Categories []Category `json:"categories,omitempty"`
-	Deleted    bool       `json:"deleted"`
+	Month        string     `json:"month"`
+	Note         string     `json:"note,omitempty"`
+	Income       int64      `json:"income"`
+	Budgeted     int64      `json:"budgeted"`
+	Activity     int64      `json:"activity"`
+	ToBeBudgeted int64      `json:"to_be_budgeted"`
+	Categories   []Category `json:"categories,omitempty"`
+	Deleted      bool       `json:"deleted"`
 }
