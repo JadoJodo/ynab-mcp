@@ -42,12 +42,31 @@ func registerBudgetTools(server *mcp.Server, client *ynab.Client) {
 			return errResult(err), struct{}{}, nil
 		}
 
+		accountCount := 0
+		for _, a := range budget.Accounts {
+			if !a.Deleted {
+				accountCount++
+			}
+		}
+		groupCount := 0
+		for _, g := range budget.CategoryGroups {
+			if !g.Deleted {
+				groupCount++
+			}
+		}
+		payeeCount := 0
+		for _, p := range budget.Payees {
+			if !p.Deleted {
+				payeeCount++
+			}
+		}
+
 		var sb strings.Builder
 		fmt.Fprintf(&sb, "Budget: %s\n", budget.Name)
 		fmt.Fprintf(&sb, "ID: %s\n", budget.ID)
-		fmt.Fprintf(&sb, "Accounts: %d\n", len(budget.Accounts))
-		fmt.Fprintf(&sb, "Category groups: %d\n", len(budget.CategoryGroups))
-		fmt.Fprintf(&sb, "Payees: %d\n", len(budget.Payees))
+		fmt.Fprintf(&sb, "Accounts: %d\n", accountCount)
+		fmt.Fprintf(&sb, "Category groups: %d\n", groupCount)
+		fmt.Fprintf(&sb, "Payees: %d\n", payeeCount)
 		return textResult(sb.String()), struct{}{}, nil
 	})
 }

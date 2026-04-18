@@ -172,6 +172,93 @@ func TestDeleteTransaction_Success(t *testing.T) {
 	}
 }
 
+func TestUpdateTransaction_ClearsFlagColorWithNull(t *testing.T) {
+	var capturedBody []byte
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		capturedBody, _ = io.ReadAll(r.Body)
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": map[string]any{
+				"transaction": map[string]any{"id": "t1", "date": "2024-01-15", "amount": -10000},
+			},
+		})
+	})
+	if _, err := c.UpdateTransaction("b1", "t1", UpdateTransaction{
+		FlagColor: json.RawMessage("null"),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	var envelope struct {
+		Transaction map[string]json.RawMessage `json:"transaction"`
+	}
+	if err := json.Unmarshal(capturedBody, &envelope); err != nil {
+		t.Fatalf("unmarshal body: %v (body: %s)", err, capturedBody)
+	}
+	flag, ok := envelope.Transaction["flag_color"]
+	if !ok {
+		t.Fatalf("flag_color missing from body: %s", capturedBody)
+	}
+	if string(flag) != "null" {
+		t.Errorf("flag_color = %s, want null", flag)
+	}
+}
+
+func TestUpdateTransaction_OmitsFlagColorWhenNotSet(t *testing.T) {
+	var capturedBody []byte
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		capturedBody, _ = io.ReadAll(r.Body)
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": map[string]any{
+				"transaction": map[string]any{"id": "t1", "date": "2024-01-15", "amount": -10000},
+			},
+		})
+	})
+	memo := "no flag change"
+	if _, err := c.UpdateTransaction("b1", "t1", UpdateTransaction{
+		Memo: &memo,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	var envelope struct {
+		Transaction map[string]json.RawMessage `json:"transaction"`
+	}
+	if err := json.Unmarshal(capturedBody, &envelope); err != nil {
+		t.Fatalf("unmarshal body: %v", err)
+	}
+	if _, ok := envelope.Transaction["flag_color"]; ok {
+		t.Errorf("flag_color should be omitted, body: %s", capturedBody)
+	}
+}
+
+func TestUpdateTransaction_SetsFlagColor(t *testing.T) {
+	var capturedBody []byte
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		capturedBody, _ = io.ReadAll(r.Body)
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": map[string]any{
+				"transaction": map[string]any{"id": "t1", "date": "2024-01-15", "amount": -10000},
+			},
+		})
+	})
+	if _, err := c.UpdateTransaction("b1", "t1", UpdateTransaction{
+		FlagColor: json.RawMessage(`"red"`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	var envelope struct {
+		Transaction map[string]json.RawMessage `json:"transaction"`
+	}
+	if err := json.Unmarshal(capturedBody, &envelope); err != nil {
+		t.Fatalf("unmarshal body: %v", err)
+	}
+	flag, ok := envelope.Transaction["flag_color"]
+	if !ok {
+		t.Fatalf("flag_color missing from body: %s", capturedBody)
+	}
+	if string(flag) != `"red"` {
+		t.Errorf("flag_color = %s, want \"red\"", flag)
+	}
+}
+
 func TestUpdateTransaction_Success(t *testing.T) {
 	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut {

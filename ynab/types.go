@@ -1,6 +1,9 @@
 package ynab
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // Response is the generic YNAB API response envelope.
 type Response[T any] struct {
@@ -144,7 +147,7 @@ type UpdateTransaction struct {
 	Memo       *string `json:"memo,omitempty"`
 	Cleared    *string `json:"cleared,omitempty"`
 	Approved   *bool   `json:"approved,omitempty"`
-	FlagColor  *string `json:"flag_color,omitempty"`
+	FlagColor  json.RawMessage `json:"flag_color,omitempty"`
 }
 
 // Payee represents a YNAB payee.
