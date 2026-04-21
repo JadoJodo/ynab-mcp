@@ -1,13 +1,44 @@
 package tools
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/JadoJodo/ynab-mcp/ynab"
+	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
+
+var validFlagColors = map[string]bool{
+	"red": true, "orange": true, "yellow": true,
+	"green": true, "blue": true, "purple": true,
+}
+
+// normalizeFlagColor validates and normalizes a flag_color JSON input.
+// Returns (nil, nil) if the field should be omitted (not provided).
+// Returns (json.RawMessage("null"), nil) to clear the flag.
+// Returns (`"red"` etc, nil) for a valid color.
+// Returns an error for invalid colors.
+func normalizeFlagColor(raw json.RawMessage) (json.RawMessage, error) {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 {
+		return nil, nil
+	}
+	if bytes.Equal(trimmed, []byte("null")) {
+		return json.RawMessage("null"), nil
+	}
+	var s string
+	if err := json.Unmarshal(trimmed, &s); err != nil {
+		return nil, fmt.Errorf("flag_color must be a string or null, got %s", string(trimmed))
+	}
+	if !validFlagColors[s] {
+		return nil, fmt.Errorf("flag_color %q is invalid; must be one of red, orange, yellow, green, blue, purple, or null", s)
+	}
+	return json.Marshal(s)
+}
 
 type listTransactionsInput struct {
 	BudgetID   string `json:"budget_id" jsonschema:"Budget ID or last-used"`
@@ -44,7 +75,7 @@ type updateTransactionInput struct {
 	Memo          *string  `json:"memo,omitempty" jsonschema:"New memo"`
 	Cleared       *string  `json:"cleared,omitempty" jsonschema:"New cleared status: cleared or uncleared"`
 	Approved      *bool    `json:"approved,omitempty" jsonschema:"Whether to approve the transaction"`
-	FlagColor     *string  `json:"flag_color,omitempty" jsonschema:"Flag color: red orange yellow green blue purple or null to clear"`
+	FlagColor     json.RawMessage `json:"flag_color,omitempty" jsonschema:"Flag color: red, orange, yellow, green, blue, purple — or null to clear"`
 }
 
 type deleteTransactionInput struct {
@@ -165,10 +196,26 @@ func registerTransactionTools(server *mcp.Server, client *ynab.Client) {
 		return textResult("Transaction created successfully!\n" + renderTransaction(created)), struct{}{}, nil
 	})
 
+	updateSchema, err := jsonschema.For[updateTransactionInput](&jsonschema.ForOptions{})
+	if err != nil {
+		panic(fmt.Errorf("update_transaction schema: %w", err))
+	}
+	if updateSchema.Properties != nil {
+		updateSchema.Properties["flag_color"] = &jsonschema.Schema{
+			Types:       []string{"string", "null"},
+			Description: "Flag color: red, orange, yellow, green, blue, purple — or null to clear",
+		}
+	}
+
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "update_transaction",
 		Description: "Update an existing transaction in a YNAB budget",
+		InputSchema: updateSchema,
 	}, func(ctx context.Context, req *mcp.CallToolRequest, input updateTransactionInput) (*mcp.CallToolResult, struct{}, error) {
+		flagColor, err := normalizeFlagColor(input.FlagColor)
+		if err != nil {
+			return errResult(err), struct{}{}, nil
+		}
 		update := ynab.UpdateTransaction{
 			Date:       input.Date,
 			PayeeName:  input.PayeeName,
@@ -176,7 +223,7 @@ func registerTransactionTools(server *mcp.Server, client *ynab.Client) {
 			Memo:       input.Memo,
 			Cleared:    input.Cleared,
 			Approved:   input.Approved,
-			FlagColor:  input.FlagColor,
+			FlagColor:  flagColor,
 		}
 		if input.Amount != nil {
 			m := MilliunitsFromDollars(*input.Amount)
