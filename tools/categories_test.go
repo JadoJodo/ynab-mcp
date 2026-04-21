@@ -89,15 +89,15 @@ func TestGetCategoryTool_Success(t *testing.T) {
 		json.NewEncoder(w).Encode(map[string]any{
 			"data": map[string]any{
 				"category": map[string]any{
-					"id":                        "c1",
-					"name":                      "Rent",
-					"category_group_name":       "Bills",
-					"budgeted":                  100000,
-					"activity":                  -100000,
-					"balance":                   0,
-					"goal_type":                 "TB",
-					"goal_target":               120000,
-					"goal_percentage_complete":   83,
+					"id":                       "c1",
+					"name":                     "Rent",
+					"category_group_name":      "Bills",
+					"budgeted":                 100000,
+					"activity":                 -100000,
+					"balance":                  0,
+					"goal_type":                "TB",
+					"goal_target":              120000,
+					"goal_percentage_complete": 83,
 				},
 			},
 		})

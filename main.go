@@ -10,6 +10,8 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
+var Version = "dev"
+
 func main() {
 	token := os.Getenv("YNAB_API_TOKEN")
 	if token == "" {
@@ -22,7 +24,7 @@ func main() {
 	server := mcp.NewServer(
 		&mcp.Implementation{
 			Name:    "ynab-mcp",
-			Version: "0.1.0",
+			Version: Version,
 		},
 		nil,
 	)
