@@ -66,15 +66,15 @@ type createTransactionInput struct {
 }
 
 type updateTransactionInput struct {
-	BudgetID      string   `json:"budget_id" jsonschema:"Budget ID or last-used"`
-	TransactionID string   `json:"transaction_id" jsonschema:"Transaction ID to update"`
-	Amount        *float64 `json:"amount,omitempty" jsonschema:"New amount in dollars (negative for outflow)"`
-	Date          *string  `json:"date,omitempty" jsonschema:"New date (YYYY-MM-DD)"`
-	PayeeName     *string  `json:"payee_name,omitempty" jsonschema:"New payee name"`
-	CategoryID    *string  `json:"category_id,omitempty" jsonschema:"New category ID"`
-	Memo          *string  `json:"memo,omitempty" jsonschema:"New memo"`
-	Cleared       *string  `json:"cleared,omitempty" jsonschema:"New cleared status: cleared or uncleared"`
-	Approved      *bool    `json:"approved,omitempty" jsonschema:"Whether to approve the transaction"`
+	BudgetID      string          `json:"budget_id" jsonschema:"Budget ID or last-used"`
+	TransactionID string          `json:"transaction_id" jsonschema:"Transaction ID to update"`
+	Amount        *float64        `json:"amount,omitempty" jsonschema:"New amount in dollars (negative for outflow)"`
+	Date          *string         `json:"date,omitempty" jsonschema:"New date (YYYY-MM-DD)"`
+	PayeeName     *string         `json:"payee_name,omitempty" jsonschema:"New payee name"`
+	CategoryID    *string         `json:"category_id,omitempty" jsonschema:"New category ID"`
+	Memo          *string         `json:"memo,omitempty" jsonschema:"New memo"`
+	Cleared       *string         `json:"cleared,omitempty" jsonschema:"New cleared status: cleared or uncleared"`
+	Approved      *bool           `json:"approved,omitempty" jsonschema:"Whether to approve the transaction"`
 	FlagColor     json.RawMessage `json:"flag_color,omitempty" jsonschema:"Flag color: red, orange, yellow, green, blue, purple — or null to clear"`
 }
 

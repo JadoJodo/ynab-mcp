@@ -138,15 +138,15 @@ type SaveTransaction struct {
 
 // UpdateTransaction is used for updating transactions.
 type UpdateTransaction struct {
-	AccountID  *string `json:"account_id,omitempty"`
-	Date       *string `json:"date,omitempty"`
-	Amount     *int64  `json:"amount,omitempty"`
-	PayeeID    *string `json:"payee_id,omitempty"`
-	PayeeName  *string `json:"payee_name,omitempty"`
-	CategoryID *string `json:"category_id,omitempty"`
-	Memo       *string `json:"memo,omitempty"`
-	Cleared    *string `json:"cleared,omitempty"`
-	Approved   *bool   `json:"approved,omitempty"`
+	AccountID  *string         `json:"account_id,omitempty"`
+	Date       *string         `json:"date,omitempty"`
+	Amount     *int64          `json:"amount,omitempty"`
+	PayeeID    *string         `json:"payee_id,omitempty"`
+	PayeeName  *string         `json:"payee_name,omitempty"`
+	CategoryID *string         `json:"category_id,omitempty"`
+	Memo       *string         `json:"memo,omitempty"`
+	Cleared    *string         `json:"cleared,omitempty"`
+	Approved   *bool           `json:"approved,omitempty"`
 	FlagColor  json.RawMessage `json:"flag_color,omitempty"`
 }
 
